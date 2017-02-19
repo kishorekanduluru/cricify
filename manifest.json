@@ -1,0 +1,51 @@
+{
+
+	"name": "Crici",
+	"version": "1.2.9",
+	"manifest_version": 2,
+  
+	"content_scripts": [
+		{
+			"matches": ["http://*/*", "https://*/*"],
+      "css": ["styles/flexslider.css", "styles/extension.css"],
+			"js" : ["jquery.js", "plugin/jquery-1.4.3.min.js", "scripts/jquery.flexslider.js", "scripts/installCheck.js"],
+			"run_at":"document_start"
+		}
+	],
+  
+  "web_accessible_resources": ["styles/flexslider.css", "styles/extension.css", "styles/tweaks.css","styles/webwidget_slideshow_dot.css", "images/bg_direction_nav_a.png"],
+  
+	"description": "Live Cricket scores & latest cricket news from Cricbuzz.com",
+	
+	 "icons": {
+		  "128": "images/ico_128.png",
+		  "64": "images/ico_64.png",
+		  "48": "images/ico_48.png",
+		  "32": "images/ico_32.png",
+		  "24": "images/ico_24.png"
+	},
+  
+
+	"browser_action": {
+		"default_icon": "images/ico_19.png", 
+		"default_title": "Cricbuzz",      
+		"default_popup": "popup.html"       
+	},
+	
+	
+	"background": {
+		"page": "background.html"
+	},
+  
+
+  "minimum_chrome_version": "18",
+
+	"content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'",
+  
+  
+  "permissions": [
+	  "https://mapps.cricbuzz.com/","https://*.cricbuzz.com/*","background","tabs","https://mapps.cricbuzz.com/cricbuzz/rss/",
+	  "notifications"
+	]
+
+}

@@ -1,0 +1,299 @@
+/* Need to set specific style for .item:hover, #logo, and .tag */
+
+* {
+font-family: 'Ubuntu', sans-serif;
+}
+.tag {
+	color:#60c00b;
+}
+
+/* No more customizations necessary below this */
+
+body {
+	width:320px;
+
+	overflow-y:auto;
+	overflow-x:hidden;
+	font: 14px bold 'Ubuntu', sans-serif;
+	margin:0;
+	padding:0;
+}
+
+
+#popup {	
+}
+
+#logo {
+	float: right;
+	position: relative;
+	z-index: 100;
+	right: 0px;
+	top: 14px;
+	margin-top: -13px;
+	cursor:pointer;
+}
+
+
+
+.table {
+display:block;width:100%; font-size:10px; height:28px; vertical-align:middle;
+}
+.table_live {
+border: 1px solid #0096CC; 
+}
+.table_complete {
+border: 1px solid #004466; 
+}
+.table_preview {
+border: 1px solid #7698a9; 
+}
+.table_td1 {
+width:230px;
+}
+.table_td2 {
+width:70px;
+text-align:right;
+}
+
+#mdesc {
+color: #333;
+font-size:12px;
+padding-left:3px;
+}
+
+li {
+margin-top: 5px;
+}
+.match_main_div {
+color: #FFF;
+/* padding:10px; */
+display:block;
+height:90px;
+margin:0px;
+}
+.matchwrapper {
+
+}
+.teamsblk {
+	width: 120px;
+	float:left;
+	margin-left: 17px;
+}
+.scoresblk {
+	width: 156px;
+	float:right;
+}
+.batteam {
+	font-size: 36px;
+	padding-left: 20px;
+}
+.vs {
+	font-size: 16px;
+	padding-left: 3px;
+}
+.ovs {
+	font-size: 14px;
+	padding-left: 3px;
+}
+.bowlteam {
+	font-size: 20px;
+	padding-left: 20px;
+}
+.score {
+	font-size: 36px;
+	text-align: right;
+	padding-right:40px;
+}
+.overs {
+	font-size: 18px;
+}
+.match_preview_div {
+margin-left: 30px;
+margin-bottom: -8px;
+padding-top: 12px;
+width: 225px;
+text-align: center;
+min-height:51px;
+}
+.match_preview_div1 {
+margin-left: 30px;
+padding-top: 3px;
+padding-bottom: 5;
+font-size:18px;
+min-height:51px;
+}
+.left_half_block {
+width: 120px;
+float:left;
+}
+.right_half_block {
+margin-left: 120px;
+padding-left: 5px;
+width: 120px;
+border-left: 1px solid #087597;
+}
+.right_half_block_forCompleted {
+margin-left: 120px;
+padding-left: 5px;
+width: 120px;
+border-left: 1px solid #06222B;
+}
+span.curr_bat_team {
+font-size:24px
+}
+.match_status_div {
+color: #fff;
+text-align: left;
+clear:both;
+margin-left:30px;
+width: 225px;
+line-height: 14px;
+}
+.match_status_div2 {
+color: #fff;
+text-align: left;
+clear:both;
+width: 225px;
+line-height: 14px;
+}
+.match_complete_div {
+font-size:20px;
+clear:both;
+text-align: left;
+margin-left:30px;
+width: 225px;
+}
+.match_test_complete_div {
+font-size:18px;
+clear:both;
+text-align: left;
+padding: 10px 0 0 40px;
+}
+.team_names {
+font-size:12px;
+font-weight:normal;
+margin-top: 5 px;
+}
+.story_w_img {
+	width:300px;
+	height:40px;
+/*	margin-top:-10px;*/
+	padding:5px;
+	text-overflow:ellipsis;
+	overflow:hidden;
+	margin-right:0px;
+	border-bottom:1px solid #E2E2E2;
+	color:#666;
+
+}
+
+.story_w_img img {
+	float:left;
+/*	-webkit-box-shadow:0px 0px 3px #999;
+	padding:3px; */
+	background:white;
+	margin-right:10px;
+}
+
+.description  {
+	font-weight:normal;
+	font-size:14px;
+	margin-left: 64px;
+}
+
+.story_wo_img {
+	width:300px;
+	color:black;
+/*	margin-top:-10px;*/
+	padding:5px;
+	text-overflow:ellipsis;
+	overflow:hidden;
+	margin-right:0px;
+	border-bottom:1px solid #E2E2E2;
+	color:black;
+}
+
+.story_w_img:hover, .story_w_img:hover a {
+	background:#eee;
+}
+
+.story_wo_img:hover, .story_wo_img:hover a {
+	background:#eee;
+}
+
+
+/*img { -webkit-filter: sepia(100%) contrast(200%) blur(5px) }*/
+
+
+
+a {
+	text-decoration:none;
+}
+		
+
+
+.tag {
+	text-transform:uppercase;
+	clear:both;
+	font-stretch:ultra-condensed;
+	font-weight:bold;
+	font-size:13px;
+	margin-left:7px;
+}
+
+h4 {
+	margin-top:0;
+	margin-bottom:0;
+}
+
+.post {
+/*	padding:7px 7px 2px 7px;*/
+	width:auto;
+	margin-right:-15px;
+	padding-left:5px;
+	z-index:1;
+}
+
+.read { /*this will be all items beyond the unread count*/
+	background: #EEF0F9;
+	opacity:.9;
+	z-index:1;
+}
+
+.read {
+	color:#333;
+}
+
+#demo1 {
+display:block; width:294px; height:125px;
+padding-right:0px;
+}
+
+.more_links {
+	float:right;
+	text-align:right;
+	padding-right:10px;
+	color:#0074C6;
+	margin-bottom:10px;
+}
+#matches_preloader {
+display:block;
+text-align:center;
+width:100%;
+height:160px;
+}
+#news_preloader {
+display:block;
+text-align:center;
+width:100%;
+height:255px;
+}
+#matches_preloader  img{
+padding-top:30px;
+}
+#news_preloader  img{
+padding-top:76px;
+}
+
+.story_w_img img {width:auto; height:auto; max-width:64px; max-height:40px;}
+.bottom_footer_links {margin-left:3px;margin-bottom:5px; }
