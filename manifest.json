@@ -8,8 +8,8 @@
 		{
 			"matches": ["http://*/*", "https://*/*"],
       "css": ["styles/flexslider.css", "styles/extension.css"],
-			"js" : ["jquery.js", "plugin/jquery-1.4.3.min.js", "scripts/jquery.flexslider.js", "scripts/installCheck.js"],
-			"run_at":"document_start"
+			"js" : ["scripts/jquery.js", "scripts/jquery.hashchange.js", "scripts/jquery.easytabs.js", "scripts/jquery.flexslider.js", "scripts/installCheck.js"]
+		
 		}
 	],
   

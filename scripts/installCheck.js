@@ -1,8 +1,16 @@
+
 var matches_data = {}
+var live_score_data = {}
+var score_card_data = {}
 var news_data = {}
+
 var timerM;
 var timerN;
 var timerA;
+
+var first_live;
+var tabs={};
+
 var oldNews=new Array();
 var oldAlert_time="0000000000";
 var dontFollowMatches = new Array();
@@ -30,11 +38,31 @@ var matchesURL = "https://synd.cricbuzz.com/cricbuzz/livecricketscore/chrome-det
 var newsURL = "https://mapps.cricbuzz.com/cricbuzz/rss/latest_news.json";
 var alertsURL = "https://sms.cricbuzz.com/chrome/alert.json"; 
 var optionsURL = "https://sms.cricbuzz.com/chrome/options.json";
+// $(document).ready(function(){ 
+// 	$('ul.tabs li').click(function(){
+// 	var tab_id = $(this).attr('data-tab');
+// 
+// 	$('ul.tabs li').removeClass('current');
+// 	$('.tab-content').removeClass('current');
+// 
+// 	$(this).addClass('current');
+// 	$("#"+tab_id).addClass('current');
+// 	});
+// });
+
+// document.addEventListener('DOMContentLoaded', function() {
+//     var link = document.getElementByClass('ul.tabs li');
+//     // onClick's logic below:
+//     link.addEventListener('click', function() {
+//         alert("done");
+//     });
+// });
 $(window).load(function() {
+	// insertTabs();
   var insightlySidebar;
-    $('body').css({
-      'padding-right': '100px'
-    });
+    // $('body').css({
+    //   'padding-right': '100px'
+    // });
     insightlySidebar = $("<div id='insightlySidebar' class='collapsed insightly-sidebar'></div>");
     
     insightlySidebar.css({
@@ -52,13 +80,56 @@ $(window).load(function() {
       'background-color': 'rgb(241, 241, 241)'
     });
     $('body').append(insightlySidebar);
+		// var theDiv = document.getElementById("insightlySidebar");
+    // var newNode = document.createElement('div');    
+    // newNode.id='container';
+    // theDiv.appendChild( newNode );
+		// document.getElementById("container").innerHTML = Tabs();
+		// var myLi=document.querySelectorAll('#container>ul>li');
+		// for(i=0;i<myLi.length;i++){
+		//  myLi[i].addEventListener('click', testing, false);
+	  // }
+		$('#tab-container').easytabs();
     var theDiv = document.getElementById("insightlySidebar");
     var newNode = document.createElement('div');    
     newNode.id='matches';
     theDiv.appendChild( newNode );
     fetch_matches();
     show_matches();
+		score_card();
+		show_live_score();
 });
+
+// function testing(){
+// 	debugger;
+// }
+
+// function Tabs(){
+// 	tabs = ""
+// 	
+// 	tabs+="<ul class='tabs1'>"
+// 	tabs+="<li class='tab-link current' data-tab='tab-1'>Tab One</li>"
+// 	tabs+="<li class='tab-link' data-tab='tab-2'>Tab Two</li>"
+// 	tabs+="</ul>"
+// 	tabs+="<div id='tab-1' class='tab-content current'>"
+// 	tabs+="Lorem ipsum dolor"
+// 	tabs+="</div>"
+// 	tabs+="<div id='tab-2' class='tab-content'>"
+// 	tabs+="Duis aute irure"
+// 		tabs+="</div>"
+	// tabs = ""
+	// tabs+="<ul>"
+	// tabs+="<li><a href='#tab-1-div'>Tab 1</a></li>"
+	// tabs+="<li><a href='#that-other-tab'>The Second Tab</a></li>"
+	// tabs+="<li><a href='#lastly'>Tab C</a></li>"
+	// tabs+="<div id='tab-1-div'>"
+	// tabs+="<h2>Heading 1</h2><p>This is the content of the first tab.</p></div>"
+	// tabs+="<div id='that-other-tab'><h2>Heading 2</h2><p>Stuff from the second tab.</p></div>"
+ // 	tabs+="<div id='lastly'><h2>Heading 3</h2><p>More stuff from the last tab.</p></div>"
+ // return tabs;
+ // }
+ 
+ 
 function show_matches() {
 	
 	//showBadge("W");
@@ -205,6 +276,43 @@ function fetch_matches() {
 	});
 
 }
+function score_card(){	
+	$.getJSON(matchesURL, function(data) {
+	for (i=0; i<data.length ;i++) {
+		if(data[i].state=="inprogress"){
+			first_live= data[i];
+			break;
+		}
+	}
+
+	score_url = "https://www.cricbuzz.com/match-api/"+first_live.matchId+"/commentary.json"
+	$.getJSON(score_url, function(data) {
+		$( "<div id='score_card'>"+match_layout.scorecard(data)+"</div>" ).insertAfter( "#demo1" );
+	});
+	});
+}
+
+function show_live_score(){
+
+	$.getJSON(matchesURL, function(data) {
+		var liveScore ="";
+		//matchdata=data[0].seriesFolder;
+		for (i=0; i<data.length ;i++) {
+			if(data[i].state=="inprogress"){
+				first_live= data[i];
+				break;
+			}
+		}
+		score_url = "https://www.cricbuzz.com/match-api/"+first_live.matchId+"/commentary.json"
+		$.getJSON(score_url, function(data) {
+			$( "<div id='recent_overs'>"+match_layout.live_scorecard(data)+"</div>" ).insertAfter( "#score_card" );
+		});
+		
+	});
+	
+	
+	
+}
 var match_layout = {
 	//header
 	header:function(data){
@@ -254,6 +362,75 @@ var match_layout = {
 		return preview_layout_data;
 	},
 	//livematch_layout
+	
+	scorecard:function(data){
+		var batsman = []
+
+			var striker = $(data.score.batsman).filter(function (i,n){
+	       return n.strike==1;
+	    });
+			var non_striker = $(data.score.batsman).filter(function (i,n){
+	       return n.strike==0;
+	    });
+			var player1 = $(data.players).filter(function (i,n){
+				return striker.length>0 && n.id == striker[0].id 
+			});
+			var player2 = $(data.players).filter(function (i,n){
+				return n.id == non_striker[0].id
+			});
+			
+			score_card_data = ""
+ 		 	score_card_data+="<table class='table table_live score_card'>"
+			score_card_data+="<tr>"
+			score_card_data+="<th>Batsman</th>"
+			score_card_data+="<th>R</th>"
+   		score_card_data+="<th>B</th>"
+			score_card_data+="<th>4s</th>"
+			score_card_data+="<th>6s</th>"
+			score_card_data+="<th>SR</th>"
+ 			score_card_data+="</tr>"
+ 		 	score_card_data+="<tr>"
+			if(striker.length > 0){
+				striker[0].name = player1[0].f_name
+				striker[0].strike_rate = striker[0].b>0 ? ((striker[0].r/striker[0].b)*100).toFixed(2) : 0
+				batsman.push(striker[0]);
+				score_card_data+="<td>"+batsman[0].name+"</td>"
+				score_card_data+="<td>"+batsman[0].r+"</td>"
+	 			score_card_data+="<td>"+batsman[0].b+"</td>"
+				score_card_data+="<td>"+batsman[0]["4s"]+"</td>"
+				score_card_data+="<td>"+batsman[0]["6s"]+"</td>"
+				score_card_data+="<td>"+batsman[0].strike_rate+"</td>"
+	 			score_card_data+="</tr>"
+				score_card_data+="<tr>"
+			}
+			
+			non_striker[0].name = player2[0].f_name
+			non_striker[0].strike_rate = non_striker[0].b>0 ? ((non_striker[0].r/non_striker[0].b)*100).toFixed(2) : 0
+			batsman.push(non_striker[0]);
+ 			score_card_data+="<td>"+batsman[1].name+"</td>"
+			score_card_data+="<td>"+batsman[1].r+"</td>"
+ 			score_card_data+="<td>"+batsman[1].b+"</td>"
+			score_card_data+="<td>"+batsman[1]["4s"]+"</td>"
+			score_card_data+="<td>"+batsman[1]["6s"]+"</td>"
+			score_card_data+="<td>"+batsman[1].strike_rate+"</td>"
+			
+ 			score_card_data+="</tr>"
+ 		  score_card_data+="</table>"
+ 		return score_card_data;
+	},
+	
+	live_scorecard:function(data){
+		 live_score_data = ""
+		 live_score_data+="<table class='table table_live'>"
+		 live_score_data+="<tr>"
+			live_score_data+="<td class='table_td1'>"
+				live_score_data+=data.score.prev_overs
+				live_score_data+="</td>"
+			live_score_data+="</tr>"
+		live_score_data+="</table>"
+		return live_score_data;
+	},
+	
 	livematch_layout:function(data){
 		if((data.type=="TEST")&&((data.BatTeam1stinnScore.runsAndWicket!=""&&data.BatTeam1stinnScore.runsAndWicket!="0/0")||(data.BowlTeam1stinnScore.runsAndWicket!=""&&data.BowlTeam1stinnScore.runsAndWicket!="0/0"))) {
 			livematch_layout_data ="<div class='matchwrapper' style='border:1px solid #0096CC;'><div class='match_main_div' style='background-color:#0096CC'><div class='match_preview_div1'><div class='left_half_block'><div class='team_names'>"+data.battingTeamName+"</div><div style='margin-top: 0px;font-size:16px;'>"+data.displayBattingTeamScore+"</div></div><div class='right_half_block'><div class='team_names'>"+data.bowlingTeamName+"</div><div style='margin-top: 0px;font-size:16px;'>"+data.displayBowlingTeamScore+"</div></div></div>";
