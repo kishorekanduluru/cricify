@@ -1,8 +1,11 @@
-
+var liveMatchStates = ["inprogress","rain","badweather","badlight","dinner","drink","innings break","unforeseen","wetoutfield","lunch","stump","tea"]
+var completedMatchStates = ["complete","abandon"]
+var nextMatchStates = ["start","preview","delay"]
 var matches_data = {}
 var live_score_data = {}
 var score_card_data = {}
 var news_data = {}
+
 
 var timerM;
 var timerN;
@@ -38,100 +41,148 @@ var matchesURL = "https://synd.cricbuzz.com/cricbuzz/livecricketscore/chrome-det
 var newsURL = "https://mapps.cricbuzz.com/cricbuzz/rss/latest_news.json";
 var alertsURL = "https://sms.cricbuzz.com/chrome/alert.json"; 
 var optionsURL = "https://sms.cricbuzz.com/chrome/options.json";
-// $(document).ready(function(){ 
-// 	$('ul.tabs li').click(function(){
-// 	var tab_id = $(this).attr('data-tab');
-// 
-// 	$('ul.tabs li').removeClass('current');
-// 	$('.tab-content').removeClass('current');
-// 
-// 	$(this).addClass('current');
-// 	$("#"+tab_id).addClass('current');
-// 	});
-// });
 
-// document.addEventListener('DOMContentLoaded', function() {
-//     var link = document.getElementByClass('ul.tabs li');
-//     // onClick's logic below:
-//     link.addEventListener('click', function() {
-//         alert("done");
-//     });
-// });
 $(window).load(function() {
-	// insertTabs();
   var insightlySidebar;
-    // $('body').css({
-    //   'padding-right': '100px'
-    // });
-    insightlySidebar = $("<div id='insightlySidebar' class='collapsed insightly-sidebar'></div>");
-    
-    insightlySidebar.css({
-      'margin-top': '108px',
-      'height': '125px',
-      'bottom': 'auto',
-      'position': 'absolute',
-      'right': '0px',
-      'top': '0px',
-      'z-index': 9999,
-      'width': '300px',
-      'height': '100%',
-      'overflow-y' :'auto',
-      'color': 'rgb(51, 51, 51)',
-      'background-color': 'rgb(241, 241, 241)'
-    });
-    $('body').append(insightlySidebar);
-		// var theDiv = document.getElementById("insightlySidebar");
-    // var newNode = document.createElement('div');    
-    // newNode.id='container';
-    // theDiv.appendChild( newNode );
-		// document.getElementById("container").innerHTML = Tabs();
-		// var myLi=document.querySelectorAll('#container>ul>li');
-		// for(i=0;i<myLi.length;i++){
-		//  myLi[i].addEventListener('click', testing, false);
-	  // }
-		$('#tab-container').easytabs();
-    var theDiv = document.getElementById("insightlySidebar");
-    var newNode = document.createElement('div');    
-    newNode.id='matches';
-    theDiv.appendChild( newNode );
-    fetch_matches();
-    show_matches();
-		score_card();
-		show_live_score();
+  // addContainer();
+	// addMatchSlider();
+	// addTabs();
+	var result = getMatches('international', 'live');
+	debugger;
 });
 
-// function testing(){
-// 	debugger;
-// }
-
-// function Tabs(){
-// 	tabs = ""
-// 	
-// 	tabs+="<ul class='tabs1'>"
-// 	tabs+="<li class='tab-link current' data-tab='tab-1'>Tab One</li>"
-// 	tabs+="<li class='tab-link' data-tab='tab-2'>Tab Two</li>"
-// 	tabs+="</ul>"
-// 	tabs+="<div id='tab-1' class='tab-content current'>"
-// 	tabs+="Lorem ipsum dolor"
-// 	tabs+="</div>"
-// 	tabs+="<div id='tab-2' class='tab-content'>"
-// 	tabs+="Duis aute irure"
-// 		tabs+="</div>"
-	// tabs = ""
-	// tabs+="<ul>"
-	// tabs+="<li><a href='#tab-1-div'>Tab 1</a></li>"
-	// tabs+="<li><a href='#that-other-tab'>The Second Tab</a></li>"
-	// tabs+="<li><a href='#lastly'>Tab C</a></li>"
-	// tabs+="<div id='tab-1-div'>"
-	// tabs+="<h2>Heading 1</h2><p>This is the content of the first tab.</p></div>"
-	// tabs+="<div id='that-other-tab'><h2>Heading 2</h2><p>Stuff from the second tab.</p></div>"
- // 	tabs+="<div id='lastly'><h2>Heading 3</h2><p>More stuff from the last tab.</p></div>"
- // return tabs;
- // }
- 
- 
-function show_matches() {
+function addContainer(){
+	insightlySidebar = $("<div id='insightlySidebar' class='collapsed insightly-sidebar'></div>");
 	
+	insightlySidebar.css({
+		'margin-top': '108px',
+		'height': '125px',
+		'bottom': 'auto',
+		'position': 'absolute',
+		'right': '0px',
+		'top': '0px',
+		'z-index': 9999,
+		'width': '300px',
+		'height': '100%',
+		'overflow-y' :'auto',
+		'color': 'rgb(51, 51, 51)',
+		'background-color': 'rgb(241, 241, 241)'
+	});
+	$('body').append(insightlySidebar);
+}
+function addTabs(){
+	var theDiv = document.getElementById("insightlySidebar");
+	var newNode = document.createElement('div');    
+	newNode.id='cric-container';
+	theDiv.appendChild(newNode);
+	document.getElementById("cric-container").innerHTML = insertTabs();
+	var myLi=document.querySelectorAll('#cric-container>ul>li');
+	
+	for(i=0;i<myLi.length;i++){
+	 myLi[i].addEventListener('click', eventListner, false);
+	}
+	activateZozoPlugin();
+}
+function addMatchSlider(){
+	var theDiv = document.getElementById("insightlySidebar");
+	var newNode = document.createElement('div');    
+	newNode.id='slide-bar';
+	theDiv.appendChild(newNode);
+	fetchMatches();
+	showMatches();
+	
+	// scoreCard();
+	// showLiveScore();
+}
+function activateZozoPlugin(){
+	$("#tabbed-nav").zozoTabs({
+						 rounded: false,
+						 multiline: true,
+						 theme: "white",                
+						 size: "mini",
+						 responsive: true,
+						 animation: {
+								 effects: "slideH",
+								 easing: "easeInOutCirc",
+								 type: "jquery"
+						 },
+						 defaultTab: "tab1"
+				 });
+	
+				 /* jQuery activation and setting options for nested tabs with class selector*/
+				 $(".nested-tabs").zozoTabs({
+						 position: "top-left",
+						 theme: "red",
+						 style: "underlined",
+						 size: "mini",
+						 rounded: false,
+						 shadows: false,
+						 orientations: "vertical",
+						 defaultTab: "tab1",
+						 animation: {
+								 easing: "easeInOutCirc",
+								 effects: "slideV"
+						 },
+						 size: "medium"
+				 });
+				 
+				 $("#demo-accordion").zozoAccordion({
+							theme: "lightblue",
+							rounded: true,
+							active: 1,
+							orientation: "vertical",
+							showIcons: true,
+							headerSize: 42,
+							sectionSpacing: 0
+	
+					});
+}
+
+function eventListner(){
+	var tab_id = $(this).attr('data-tab');
+	$('#cric-container > ul.tabs li').removeClass('current');
+	$('.tab-content').removeClass('current');
+	$(this).addClass('current');
+	$("#"+tab_id).addClass('current');
+}
+
+function insertTabs(){
+	tabs = ""
+	tabs+="<div id='tabbed-nav'>"
+	tabs+="<ul>"
+	tabs+="<li><a>International</a></li>"
+	tabs+="<li><a>Legue</a></li>"
+	tabs+="</ul>"
+	tabs+="<div><div class='z-content-pad'>"
+	tabs+="<div class='nested-tabs'>"
+	tabs+="<ul>"
+	tabs+="<li><a>Live</a></li>"
+	tabs+="<li><a>Results</a></li>"
+	tabs+="<li><a>Schedule</a></li>"
+  tabs+="</ul>"
+	tabs+="<div>"
+	tabs+="<div>"
+	tabs+=createAccordion();
+	tabs+="</div>"
+	tabs+="<div><h4>Results</h4><p><a href=''>Results coming up</a></p>"
+	tabs+="</div>"
+	tabs+="</div></div></div>"
+	tabs+="<div><h4>10 Preset themes</h4><ul class='icons'><li>White</li>"
+	tabs+="<li>Crystal</li><li>Silver</li><li>Gray</li></ul></div></div></div>"
+ return tabs;
+ }
+
+function createAccordion() {
+	var accr = " "
+	accr+="<ul id='demo-accordion'>"
+	accr+="<li><h3>Overview</h3><div><p><strong>Slick Design</strong> and Limitless Customization</p></div></li>"
+	accr+="<li><h3>Documentation</h3><div><p>Fully documented and step-by-step guide provided to help you get up and running with Zozo Accordion.</p><p>Documentation can be found on</p></div></li>"
+	accr+="</ul>"
+	return accr;
+}
+
+ 
+function showMatches() {
 	//showBadge("W");
 	$.getJSON(matchesURL, function(data) {
 		var matchdata ="";
@@ -159,13 +210,13 @@ function show_matches() {
 							matchdata+="<table class='table table_live'>"
 								matchdata+="<tr>"
 									matchdata+="<td class='table_td1'>"
-										matchdata+=match_layout.follow_matches(data[i])
+										matchdata+=match_layout.followMatches(data[i])
 										matchdata+= match_layout.header(data[i])
 									matchdata+="</td>"
 								matchdata+="</tr>"
 							matchdata+="</table>"
 							
-							matchdata+=match_layout.url_layout(data[i])
+							matchdata+=match_layout.urlLayout(data[i])
 							matchdata+=match_layout.livematch_layout(data[i])
 							matchdata+=match_layout.status_layout(data[i])
 							
@@ -184,9 +235,9 @@ function show_matches() {
 								matchdata+="</tr>"
 							matchdata+="</table>"
 							
-							matchdata+=match_layout.url_layout(data[i])
+							matchdata+=match_layout.urlLayout(data[i])
 							if(data[i].displayBattingTeamScore=="")
-								matchdata+=match_layout.completematch_preview_layout(data[i])
+								matchdata+=match_layout.completematchPreviewLayout(data[i])
 							else
 								matchdata+=match_layout.completematch_layout(data[i])
 								
@@ -202,13 +253,13 @@ function show_matches() {
 							matchdata+="<table class='table table_preview'>"
 								matchdata+="<tr>"
 									matchdata+="<td class='table_td1'>"
-										matchdata+=match_layout.follow_matches(data[i])
+										matchdata+=match_layout.followMatches(data[i])
 										matchdata+= match_layout.header(data[i])
 									matchdata+="</td>"
 								matchdata+="</tr>"
 							matchdata+="</table>"
 							
-							matchdata+=match_layout.url_layout(data[i])
+							matchdata+=match_layout.urlLayout(data[i])
 							matchdata+=match_layout.preview_layout(data[i])
 							matchdata+=match_layout.status_layout(data[i])
 							
@@ -218,27 +269,24 @@ function show_matches() {
 				  break;
 			} 
 		};
-		if(i==0) { 
-      
-			document.getElementById("matches").innerHTML ="<div>No Live matches</div>"; 
+		if(i==0) {
+			document.getElementById("slide-bar").innerHTML ="<div>No Live matches</div>"; 
 		} 
 		else { 
-				document.getElementById("matches").innerHTML ="<div id='demo1' class='flexslider'><ul class='slides'>"+matchdata+"</ul><div style='clear: both'></div></div>";
-        document.getElementById("matches").style="padding:0px 5px 5px 5px";
+				document.getElementById("slide-bar").innerHTML ="<div id='demo1' class='flexslider'><ul class='slides'>"+matchdata+"</ul><div style='clear: both'></div></div>";
+        document.getElementById("slide-bar").style="padding:0px 5px 5px 5px";
 				  $('.flexslider').flexslider({
 					animation: "slide"
 				  });
-        
-				// setEventForFollowMatches();
+  
 		}	
 	});
 }
-function fetch_matches() {
+function fetchMatches() {
 
 	$.getJSON(matchesURL, function(data) {
-	
 		if(timerM) { clearTimeout(timerM); }			
-		timerM = setTimeout(fetch_matches, reloadTime);
+		timerM = setTimeout(fetchMatches, reloadTime);
 		var  setNewTitle="";			
 			
 		$(data).each(function(){
@@ -276,7 +324,56 @@ function fetch_matches() {
 	});
 
 }
-function score_card(){	
+
+function getMatches(type,state){
+	debugger;
+	var matches = [];
+	var states = [];
+	var result = [];
+	var jqxhr = $.getJSON(matchesURL, function(data) {
+  console.log( "success" );
+})
+  .done(function() {
+    console.log( "second success" );
+  })
+  .fail(function() {
+    console.log( "error" );
+  })
+  .always(function() {
+    console.log( "complete" );
+  });
+	$.getJSON(matchesURL, function(data) {
+		
+		console.log(data.length);
+		// for (i=0; i<data.length ;i++) {
+		// 	console.log(i);
+		// }
+		// matches = data;
+	});
+	// states = findStates(state);
+	// for (i=0; i<matches.length ;i++) {
+	// 	if($.inArray(matches[i].state, states)!=-1){
+	//   	result.push(matches[i]);
+	// 	}
+  // }
+	return result;
+}
+
+function findStates(state){
+	var result = [];
+	if(state == "live"){
+	  result = liveMatchStates;
+	}
+	// else if($.inArray(state, completedMatchStates)!=-1){
+	//   result = completedMatchStates;
+	// }
+	// else if($.inArray(state, nextMatchStates)!=-1){
+	//   result = nextMatchStates;
+	// }
+	return result;
+}
+
+function scoreCard(){
 	$.getJSON(matchesURL, function(data) {
 	for (i=0; i<data.length ;i++) {
 		if(data[i].state=="inprogress"){
@@ -292,7 +389,7 @@ function score_card(){
 	});
 }
 
-function show_live_score(){
+function showLiveScore(){
 
 	$.getJSON(matchesURL, function(data) {
 		var liveScore ="";
@@ -328,7 +425,7 @@ var match_layout = {
 		return header_data;
 	},
 	//follow_matches
-	follow_matches:function(data){
+	followMatches:function(data){
 		var	isCheckedData = " checked='checked' ";			
 		if($.inArray(data.matchId + "",dontFollowMatches) >= 0){
 			isCheckedData = "";
@@ -337,12 +434,12 @@ var match_layout = {
 		return follow_matches_data;
 	},
 	//url_layout
-	url_layout:function(data){
+	urlLayout:function(data){
 		url_data = "<a href='http://live.cricbuzz.com/live/scorecard/" + data.matchId + "/" +replaceSaces(data.team1.fullName)+"-vs-"+replaceSaces(data.team2.fullName)+"-"+replaceSaces(data.matchdesc)+"?utm_source=crmext' target='_blank'>";
 		return url_data;
 	},
-	//completematch_preview_layout
-	completematch_preview_layout:function(data){
+	//completematchPreviewLayout
+	completematchPreviewLayout:function(data){
 		var charlength=(data.team1.shortName+" vs "+data.team2.shortName).length;
 		var font_size="font-size:24px;";
 		if(charlength>12) {
@@ -476,5 +573,62 @@ var match_layout = {
 		
 		status_data = "<div class='match_status_div' style='"+font_size+"'>"+statusData+"</div></div></div></a>";
 		return status_data;
+	},
+	
+	int_matches:function(type){
+	 	if(type == "live"){
+			$.getJSON(matchesURL, function(data) {
+				var matchdata ="";
+				//matchdata=data[0].seriesFolder;
+				var i=0;
+				for (i=0; i<data.length ;i++) {
+					switch (data[i].state)
+					{
+						//During the match for ODI, T20 and test matches.
+						case "inprogress":
+						case "rain":
+						case "badweather":
+						case "badlight":
+						case "dinner":
+						case "drink":
+						case "innings break":
+						case "unforeseen":
+						case "wetoutfield":
+						//for Test matches
+						case "lunch":
+						case "stump":
+						case "tea":
+								matchdata+="<li>"
+								
+									matchdata+="<table class='table table_live'>"
+										matchdata+="<tr>"
+											matchdata+="<td class='table_td1'>"
+												matchdata+=match_layout.followMatches(data[i])
+												matchdata+= match_layout.header(data[i])
+											matchdata+="</td>"
+										matchdata+="</tr>"
+									matchdata+="</table>"
+									
+									matchdata+=match_layout.urlLayout(data[i])
+									matchdata+=match_layout.livematch_layout(data[i])
+									matchdata+=match_layout.status_layout(data[i])
+									
+								matchdata+="</li>"
+								break;
+						default:
+						  break;
+					} 
+				};
+				if(i==0) {
+					document.getElementById("tab-1").innerHTML ="<div>No Live matches</div>"; 
+				} 
+				else { 
+						document.getElementById("tab-1").innerHTML= matchdata
+				}	
+			});
+		}
+		else{
+			
+		}
 	}
 }
