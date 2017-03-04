@@ -1,17 +1,17 @@
 var liveMatchStates = ["inprogress","rain","badweather","badlight","dinner","drink","innings break","unforeseen","wetoutfield","lunch","stump","tea"]
 var completedMatchStates = ["complete","abandon"]
 var nextMatchStates = ["start","preview","delay"]
+var liveAccordionData=""
+var liveScoreData={}
 var matches_data = {}
 var live_score_data = {}
 var score_card_data = {}
 var news_data = {}
-
-
+var activeTab="tab1";
 var timerM;
 var timerN;
 var timerA;
 
-var first_live;
 var tabs={};
 
 var oldNews=new Array();
@@ -43,12 +43,27 @@ var alertsURL = "https://sms.cricbuzz.com/chrome/alert.json";
 var optionsURL = "https://sms.cricbuzz.com/chrome/options.json";
 
 $(window).load(function() {
-  var insightlySidebar;
-  // addContainer();
-	// addMatchSlider();
-	// addTabs();
-	var result = getMatches('international', 'live');
-	debugger;
+	var activeTab="tab1";
+	var type="tab1";
+	chrome.storage.sync.get(null, function(items) {
+    // var allKeys = Object.keys(items);
+		if(items["activeTab"]=="League"){
+			activeTab="tab2";
+		}
+		if(items["type"]=="Results"){
+			type="tab2";
+		}
+		if(items["type"]=="Schedule"){
+			type="tab3";
+		}
+		var insightlySidebar;
+		addContainer();
+		// setInterval(liveAccordion,3000,"International", "live");
+		addMatchSlider();
+		addTabs(activeTab,type);
+		setInterval(liveAccordion,10000,"International", "live");
+	});
+	
 });
 
 function addContainer(){
@@ -70,19 +85,28 @@ function addContainer(){
 	});
 	$('body').append(insightlySidebar);
 }
-function addTabs(){
+
+function addTabs(activeTab,type){
 	var theDiv = document.getElementById("insightlySidebar");
 	var newNode = document.createElement('div');    
 	newNode.id='cric-container';
 	theDiv.appendChild(newNode);
 	document.getElementById("cric-container").innerHTML = insertTabs();
-	var myLi=document.querySelectorAll('#cric-container>ul>li');
-	
+	var myLi=document.querySelectorAll('#tabbed-nav>ul>li>a');
 	for(i=0;i<myLi.length;i++){
-	 myLi[i].addEventListener('click', eventListner, false);
+	 myLi[i].addEventListener('click', eventListner,false);
 	}
-	activateZozoPlugin();
+	activateZozoPlugin(activeTab,type);
+	var nestedEle=document.querySelectorAll(".nested-tabs>ul.z-tabs-nav.z-tabs-desktop>li>a");
+	for(i=0;i<nestedEle.length;i++){
+	 nestedEle[i].addEventListener('click', nestedEventListner,false);
+	}
+	var accordion=document.querySelectorAll("ul#demo-accordion>li>h3");
+	for(i=0;i<accordion.length;i++){
+	 accordion[i].addEventListener('click', accordionEventListner,false);
+	}
 }
+
 function addMatchSlider(){
 	var theDiv = document.getElementById("insightlySidebar");
 	var newNode = document.createElement('div');    
@@ -90,68 +114,75 @@ function addMatchSlider(){
 	theDiv.appendChild(newNode);
 	fetchMatches();
 	showMatches();
-	
-	// scoreCard();
-	// showLiveScore();
 }
-function activateZozoPlugin(){
+
+function activateZozoPlugin(activeTab,type){
+	
 	$("#tabbed-nav").zozoTabs({
-						 rounded: false,
-						 multiline: true,
-						 theme: "white",                
-						 size: "mini",
-						 responsive: true,
-						 animation: {
-								 effects: "slideH",
-								 easing: "easeInOutCirc",
-								 type: "jquery"
-						 },
-						 defaultTab: "tab1"
-				 });
+		 rounded: false,
+		 multiline: true,
+		 theme: "white",                
+		 size: "mini",
+		 responsive: true,
+		 animation: {
+				 effects: "slideH",
+				 easing: "easeInOutCirc",
+				 type: "jquery"
+		 },
+		 defaultTab: activeTab
+	});
+		
+
+/* jQuery activation and setting options for nested tabs with class selector*/
+	 $(".nested-tabs").zozoTabs({
+			 position: "top-left",
+			 theme: "red",
+			 style: "underlined",
+			 size: "mini",
+			 rounded: false,
+			 shadows: false,
+			 orientations: "vertical",
+			 animation: {
+					 easing: "easeInOutCirc",
+					 effects: "slideV"
+			 },
+			 defaultTab: type,
+			 size: "medium"
+	 });
+		
+	 $("#demo-accordion").zozoAccordion({
+				theme: "lightblue",
+				rounded: true,
+				active: 1,
+				orientation: "vertical",
+				showIcons: true,
+				headerSize: 42,
+				sectionSpacing: 0
+		});
 	
-				 /* jQuery activation and setting options for nested tabs with class selector*/
-				 $(".nested-tabs").zozoTabs({
-						 position: "top-left",
-						 theme: "red",
-						 style: "underlined",
-						 size: "mini",
-						 rounded: false,
-						 shadows: false,
-						 orientations: "vertical",
-						 defaultTab: "tab1",
-						 animation: {
-								 easing: "easeInOutCirc",
-								 effects: "slideV"
-						 },
-						 size: "medium"
-				 });
-				 
-				 $("#demo-accordion").zozoAccordion({
-							theme: "lightblue",
-							rounded: true,
-							active: 1,
-							orientation: "vertical",
-							showIcons: true,
-							headerSize: 42,
-							sectionSpacing: 0
-	
-					});
 }
 
 function eventListner(){
-	var tab_id = $(this).attr('data-tab');
-	$('#cric-container > ul.tabs li').removeClass('current');
-	$('.tab-content').removeClass('current');
-	$(this).addClass('current');
-	$("#"+tab_id).addClass('current');
+	chrome.storage.sync.set({'activeTab': $(this).text()}, function() {
+	  });
+}
+
+function nestedEventListner(){
+	chrome.storage.sync.set({'type': $(this).text()}, function() {});
+}
+
+function accordionEventListner(){
+	debugger;
+	chrome.storage.sync.set({'accordion': $(this).text()}, function() {});
 }
 
 function insertTabs(){
+	liveAccordion("International", "live");
 	tabs = ""
 	tabs+="<div id='tabbed-nav'>"
 	tabs+="<ul>"
 	tabs+="<li><a>International</a></li>"
-	tabs+="<li><a>Legue</a></li>"
+	tabs+="<li><a>League</a></li>"
 	tabs+="</ul>"
 	tabs+="<div><div class='z-content-pad'>"
 	tabs+="<div class='nested-tabs'>"
@@ -162,7 +193,7 @@ function insertTabs(){
   tabs+="</ul>"
 	tabs+="<div>"
 	tabs+="<div>"
-	tabs+=createAccordion();
+	tabs+=liveAccordionData;
 	tabs+="</div>"
 	tabs+="<div><h4>Results</h4><p><a href=''>Results coming up</a></p>"
 	tabs+="</div>"
@@ -172,15 +203,35 @@ function insertTabs(){
  return tabs;
  }
 
-function createAccordion() {
+function liveAccordion(type, state) {
+	var matches = getMatches(type, state);
 	var accr = " "
-	accr+="<ul id='demo-accordion'>"
-	accr+="<li><h3>Overview</h3><div><p><strong>Slick Design</strong> and Limitless Customization</p></div></li>"
-	accr+="<li><h3>Documentation</h3><div><p>Fully documented and step-by-step guide provided to help you get up and running with Zozo Accordion.</p><p>Documentation can be found on</p></div></li>"
-	accr+="</ul>"
-	return accr;
+	if(matches.length > 0){
+		accr+="<ul id='demo-accordion'>"
+		for(var i=0;i<matches.length;i++) {
+			scoreCard(matches[i].matchId);
+			accr+="<li><h3>"
+			accr+=matches[i].battingTeamName
+			accr+= " "
+			accr+=matches[i].displayBattingTeamScore
+			accr+= " VS "
+			accr+=matches[i].bowlingTeamName
+			accr+= " "
+			accr+=matches[i].displayBowlingTeamScore
+			accr+="</h3>"
+			accr+="<div>"
+			accr+=liveScoreData
+			accr+="</div></li>"
+		}
+		accr+="</ul>"
+	}else{
+		accr+="<div>"
+		accr+="No Live matches"
+		accr+="</div>"
+	}
+	liveAccordionData="";
+	liveAccordionData=accr;
 }
-
  
 function showMatches() {
 	//showBadge("W");
@@ -282,6 +333,7 @@ function showMatches() {
 		}	
 	});
 }
+
 function fetchMatches() {
 
 	$.getJSON(matchesURL, function(data) {
@@ -326,37 +378,20 @@ function fetchMatches() {
 }
 
 function getMatches(type,state){
-	debugger;
-	var matches = [];
-	var states = [];
-	var result = [];
-	var jqxhr = $.getJSON(matchesURL, function(data) {
-  console.log( "success" );
-})
-  .done(function() {
-    console.log( "second success" );
-  })
-  .fail(function() {
-    console.log( "error" );
-  })
-  .always(function() {
-    console.log( "complete" );
-  });
-	$.getJSON(matchesURL, function(data) {
-		
-		console.log(data.length);
-		// for (i=0; i<data.length ;i++) {
-		// 	console.log(i);
-		// }
-		// matches = data;
+	var matches_ = [];
+	var states_ = [];
+  states_ = findStates(state);
+	$.ajax({
+		url: matchesURL,
+		async: false
+	}).done(function(data) {
+		for (var i=0; i<data.length ;i++) {
+			if($.inArray(data[i].state, states_)!=-1 && data[i].matchType==type){
+		  	matches_.push(data[i]);
+			}
+	  }
 	});
-	// states = findStates(state);
-	// for (i=0; i<matches.length ;i++) {
-	// 	if($.inArray(matches[i].state, states)!=-1){
-	//   	result.push(matches[i]);
-	// 	}
-  // }
-	return result;
+	return matches_;
 }
 
 function findStates(state){
@@ -364,52 +399,62 @@ function findStates(state){
 	if(state == "live"){
 	  result = liveMatchStates;
 	}
-	// else if($.inArray(state, completedMatchStates)!=-1){
-	//   result = completedMatchStates;
-	// }
-	// else if($.inArray(state, nextMatchStates)!=-1){
-	//   result = nextMatchStates;
-	// }
+	else if(state == "complete"){
+	  result = completedMatchStates;
+	}
+	else if(state == "next"){
+	  result = nextMatchStates;
+	}
 	return result;
 }
 
-function scoreCard(){
-	$.getJSON(matchesURL, function(data) {
-	for (i=0; i<data.length ;i++) {
-		if(data[i].state=="inprogress"){
-			first_live= data[i];
-			break;
+function scoreCard(matchId){
+	var result = "";
+	score_url = "https://www.cricbuzz.com/match-api/"+matchId+"/commentary.json"
+	$.ajax({
+		url: score_url,
+		async: false
+	}).done(function(data) {
+		var str= "score_card"+data.id;
+		var $sc = $('#'+str);
+		var str_= "recent_overs"+data.id
+	  var $bbc = $('#'+str_);
+		var variable=match_layout.live_scorecard(data);
+		var values = typeof variable !== 'undefined' ? variable : '';
+		if($sc.length){
+			$sc.html(match_layout.scorecard(data));
+			if($bbc.length){
+				$bbc.html(match_layout.live_scorecard(data));
+			}	
 		}
-	}
-
-	score_url = "https://www.cricbuzz.com/match-api/"+first_live.matchId+"/commentary.json"
-	$.getJSON(score_url, function(data) {
-		$( "<div id='score_card'>"+match_layout.scorecard(data)+"</div>" ).insertAfter( "#demo1" );
-	});
-	});
-}
-
-function showLiveScore(){
-
-	$.getJSON(matchesURL, function(data) {
-		var liveScore ="";
-		//matchdata=data[0].seriesFolder;
-		for (i=0; i<data.length ;i++) {
-			if(data[i].state=="inprogress"){
-				first_live= data[i];
-				break;
+		else{
+		  liveScoreData=""
+			liveScoreData="<div id="+str+">"+match_layout.scorecard(data)+"</div>";
+			if(values.length>0){
+				liveScoreData+="<div id="+str_+">"+match_layout.live_scorecard(data)+"</div>"
+				liveScoreData+="<button type='button'>Click Me!</button>"
 			}
 		}
-		score_url = "https://www.cricbuzz.com/match-api/"+first_live.matchId+"/commentary.json"
-		$.getJSON(score_url, function(data) {
-			$( "<div id='recent_overs'>"+match_layout.live_scorecard(data)+"</div>" ).insertAfter( "#score_card" );
-		});
-		
 	});
-	
-	
+}
+
+function showBallByCoverage(data){
+	// score_url = "https://www.cricbuzz.com/match-api/"+matchId+"/commentary.json"
+	// $.getJSON(score_url, function(data) {
+	// $("<div id='recent_overs'>"+match_layout.live_scorecard(data)+"</div>" ).insertAfter( "#score_card" );
+	// });
+	var str= "recent_overs"+data.id
+  var $bbc = $('#'+str);
+	if($bbc.length){
+		$bbc.html(match_layout.live_scorecard(data));
+	}
+	else{
+		var div_ = "<div id="+str+">"+match_layout.live_scorecard(data)+"</div>"
+		$(div_).insertAfter( "#"+"score_card"+data.id);
+	}
 	
 }
+
 var match_layout = {
 	//header
 	header:function(data){
@@ -469,12 +514,7 @@ var match_layout = {
 			var non_striker = $(data.score.batsman).filter(function (i,n){
 	       return n.strike==0;
 	    });
-			var player1 = $(data.players).filter(function (i,n){
-				return striker.length>0 && n.id == striker[0].id 
-			});
-			var player2 = $(data.players).filter(function (i,n){
-				return n.id == non_striker[0].id
-			});
+			
 			
 			score_card_data = ""
  		 	score_card_data+="<table class='table table_live score_card'>"
@@ -488,7 +528,10 @@ var match_layout = {
  			score_card_data+="</tr>"
  		 	score_card_data+="<tr>"
 			if(striker.length > 0){
-				striker[0].name = player1[0].f_name
+				var player1 = $(data.players).filter(function (i,n){
+					return striker.length>0 && n.id == striker[0].id 
+				});
+				striker[0].name = player1[0].name
 				striker[0].strike_rate = striker[0].b>0 ? ((striker[0].r/striker[0].b)*100).toFixed(2) : 0
 				batsman.push(striker[0]);
 				score_card_data+="<td>"+batsman[0].name+"</td>"
@@ -500,32 +543,42 @@ var match_layout = {
 	 			score_card_data+="</tr>"
 				score_card_data+="<tr>"
 			}
-			
-			non_striker[0].name = player2[0].f_name
-			non_striker[0].strike_rate = non_striker[0].b>0 ? ((non_striker[0].r/non_striker[0].b)*100).toFixed(2) : 0
-			batsman.push(non_striker[0]);
- 			score_card_data+="<td>"+batsman[1].name+"</td>"
-			score_card_data+="<td>"+batsman[1].r+"</td>"
- 			score_card_data+="<td>"+batsman[1].b+"</td>"
-			score_card_data+="<td>"+batsman[1]["4s"]+"</td>"
-			score_card_data+="<td>"+batsman[1]["6s"]+"</td>"
-			score_card_data+="<td>"+batsman[1].strike_rate+"</td>"
-			
- 			score_card_data+="</tr>"
- 		  score_card_data+="</table>"
+			if(non_striker.length > 0){
+				var player2 = $(data.players).filter(function (i,n){
+					return n.id == non_striker[0].id
+				});
+				non_striker[0].name = player2[0].name
+				non_striker[0].strike_rate = non_striker[0].b>0 ? ((non_striker[0].r/non_striker[0].b)*100).toFixed(2) : 0
+				batsman.push(non_striker[0]);
+	 			score_card_data+="<td>"+non_striker[0].name+"</td>"
+				score_card_data+="<td>"+non_striker[0].r+"</td>"
+	 			score_card_data+="<td>"+non_striker[0].b+"</td>"
+				score_card_data+="<td>"+non_striker[0]["4s"]+"</td>"
+				score_card_data+="<td>"+non_striker[0]["6s"]+"</td>"
+				score_card_data+="<td>"+non_striker[0].strike_rate+"</td>"
+				
+	 			score_card_data+="</tr>"
+	 		  score_card_data+="</table>"
+			}	
  		return score_card_data;
 	},
 	
 	live_scorecard:function(data){
-		 live_score_data = ""
-		 live_score_data+="<table class='table table_live'>"
-		 live_score_data+="<tr>"
-			live_score_data+="<td class='table_td1'>"
-				live_score_data+=data.score.prev_overs
-				live_score_data+="</td>"
-			live_score_data+="</tr>"
-		live_score_data+="</table>"
-		return live_score_data;
+		live_score_data = ""
+		var variable = data.score.prev_overs
+		var values = typeof variable !== 'undefined' ? variable : '';
+		if(values.length>0){
+			 live_score_data+="<table class='table table_live'>"
+			 live_score_data+="<tr>"
+				live_score_data+="<td class='table_td1'>"
+					live_score_data+=data.score.prev_overs
+					live_score_data+="</td>"
+				live_score_data+="</tr>"
+				live_score_data+="</table>"
+				return live_score_data;
+			}
+		return "";
+		
 	},
 	
 	livematch_layout:function(data){

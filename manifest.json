@@ -44,6 +44,7 @@
   
   
   "permissions": [
+		"storage",
 	  "https://mapps.cricbuzz.com/","https://fonts.googleapis.com","https://*.cricbuzz.com/*","background","tabs","https://mapps.cricbuzz.com/cricbuzz/rss/",
 	  "notifications"
 	]

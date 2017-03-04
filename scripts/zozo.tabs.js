@@ -856,6 +856,7 @@
                         methods.showContent(_base, methods.getActive(_base, 0));
                     }
                     else {
+                        
                         methods.showTab(_base, _base.settings.defaultTab);
                     }
                 }
