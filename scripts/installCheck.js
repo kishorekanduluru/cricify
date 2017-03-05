@@ -96,7 +96,6 @@ function addTabs(activeTab,type){
 	for(i=0;i<myLi.length;i++){
 	 myLi[i].addEventListener('click', eventListner,false);
 	}
-	activateZozoPlugin(activeTab,type);
 	var nestedEle=document.querySelectorAll(".nested-tabs>ul.z-tabs-nav.z-tabs-desktop>li>a");
 	for(i=0;i<nestedEle.length;i++){
 	 nestedEle[i].addEventListener('click', nestedEventListner,false);
@@ -105,6 +104,7 @@ function addTabs(activeTab,type){
 	for(i=0;i<accordion.length;i++){
 	 accordion[i].addEventListener('click', accordionEventListner,false);
 	}
+	activateZozoPlugin(activeTab,type);
 }
 
 function addMatchSlider(){
@@ -172,7 +172,6 @@ function nestedEventListner(){
 }
 
 function accordionEventListner(){
-	debugger;
 	chrome.storage.sync.set({'accordion': $(this).text()}, function() {});
 }
 
