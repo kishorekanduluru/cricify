@@ -7,13 +7,13 @@
 	"content_scripts": [
 		{
 			"matches": ["http://*/*", "https://*/*"],
-      "css": ["styles/flexslider.css","styles/zozo.tabs.min.css","styles/zozo.accordion.min.css", "styles/tabs.css", "styles/extension.css"],
-			"js" : ["scripts/jquery.js","scripts/zozo.tabs.js", "scripts/zozo.accordion.js", "scripts/jquery.flexslider.js", "scripts/installCheck.js"]
+      "css": ["styles/flexslider.css","styles/style.css","styles/zozo.tabs.min.css","styles/zozo.accordion.min.css", "styles/tabs.css", "styles/extension.css"],
+			"js" : ["scripts/jquery.js","scripts/zozo.tabs.js", "scripts/zozo.accordion.js", "scripts/jquery.flexslider.js", "scripts/installCheck.js","scripts/jquery.circlemouse.js"]
 		
 		}
 	],
   
-  "web_accessible_resources": ["styles/zozo.tabs.min.css","styles/zozo.accordion.min.css", "styles/flexslider.css", "styles/tabs.css", "styles/extension.css", "styles/tweaks.css","styles/webwidget_slideshow_dot.css", "images/bg_direction_nav_a.png","img/zozo-accordion.png"],
+  "web_accessible_resources": ["styles/zozo.tabs.min.css","styles/zozo.accordion.min.css", "styles/flexslider.css", "styles/tabs.css", "styles/extension.css", "styles/tweaks.css","styles/webwidget_slideshow_dot.css", "styles/bootstrap.css","styles/style.css", "images/bg_direction_nav_a.png","img/zozo-accordion.png"],
   
 	"description": "Live Cricket scores & latest cricket news from Cricbuzz.com",
 	

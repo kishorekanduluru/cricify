@@ -32,6 +32,7 @@ var oldNews=new Array();
 var oldAlert_time="0000000000";
 var dontFollowMatches = new Array();
 var scoreInterval = null;
+var liveFooterInterval = null;
 var nowMatches=new Array();
 var nowAlert;
 var reloadTime = 1000 * 10;
@@ -58,34 +59,28 @@ var alertsURL = "https://sms.cricbuzz.com/chrome/alert.json";
 var optionsURL = "https://sms.cricbuzz.com/chrome/options.json";
 
 $(window).load(function() {
-	var activeTab="tab1";
-	var type="tab1";
-	chrome.storage.sync.get(null, function(items) {
-    // var allKeys = Object.keys(items);
-		if(items["activeTab"]=="League"){
-			activeTab="tab2";
-		}
-		if(items["type"]=="Results"){
-			type="tab2";
-		}
-		if(items["type"]=="Schedule"){
-			type="tab3";
-		}
-		var insightlySidebar;
-		addContainer();
-		addMatchSlider();
-		addTabs(activeTab,type);
-		setInterval(liveAccordion,10000,"International", "live");
-		setInterval(refreshShowMatches,10000);
+	var triggerArea = $("<div class='normal-trigger-area'> <a href='#' id='circle' class='ec-circle'><h3>Hovered</h3></a></div>");
+	triggerArea.css({
+		'margin-top': '50px',
+		'bottom': 'auto',
+		'position': 'absolute',
+		'height': '44px',
+		'width': '44px',
+		'z-index': 9999,
+		'overflow-y' :'auto',
+		'color': 'rgb(51, 51, 51)',
+		'background-color': 'rgb(241, 241, 241)'
 	});
-	
+	$('body').append(triggerArea);
+	var triggerArea=document.querySelectorAll(".normal-trigger-area");
+	for(i=0;i<triggerArea.length;i++){
+	 triggerArea[i].addEventListener('click', triggerAreaEventListner, false);
+	}
 });
-
  
  
 function addContainer(){
-	insightlySidebar = $("<div id='insightlySidebar' class='collapsed insightly-sidebar'></div>");
-	
+	insightlySidebar = $("<div id='insightlySidebar' class='collapsed insightly-sidebar'><div id='closeContainer'><span id='close-container-span'>x</span></div><div id='mainContainer_'></div></div>");
 	insightlySidebar.css({
 		'margin-top': '108px',
 		'height': '125px',
@@ -101,10 +96,13 @@ function addContainer(){
 		'background-color': 'rgb(241, 241, 241)'
 	});
 	$('body').append(insightlySidebar);
+	document.getElementById("close-container-span").addEventListener('click', closeContainerSpanEventListner,false);
+	$("#closeContainer").css({'height': '14px'});
+	$('#close-container-span').css({'position': 'absolute','right': '10px'});
 }
 
 function addMatchSlider(){
-	var theDiv = document.getElementById("insightlySidebar");
+	var theDiv = document.getElementById("mainContainer_");
 	var newNode = document.createElement('div');    
 	newNode.id='slide-bar';
 	theDiv.appendChild(newNode);
@@ -113,7 +111,7 @@ function addMatchSlider(){
 }
 
 function addTabs(activeTab,type){
-	var theDiv = document.getElementById("insightlySidebar");
+	var theDiv = document.getElementById("mainContainer_");
 	var newNode = document.createElement('div');    
 	newNode.id='cric-container';
 	theDiv.appendChild(newNode);
@@ -170,7 +168,7 @@ function activateZozoPlugin(activeTab,type){
 function insertTabs(){
 	liveAccordion("International", "live");
 	previewMatches("International", "preview");
-	recentMatches("International", "preview");
+	recentMatches("International", "complete");
 	tabs = ""
 	tabs+="<div id='tabbed-nav'>"
 	tabs+="<ul>"
@@ -189,7 +187,7 @@ function insertTabs(){
 	tabs+=liveAccordionData;
 	tabs+="</div>"
 	tabs+="<div>"
-	tabs+=upcomingMatchesData;
+	tabs+=recentMatchesData;
 	tabs+="</div>"
 	tabs+="<div>"
 	tabs+=upcomingMatchesData;
@@ -220,14 +218,12 @@ function liveAccordion(type, state) {
 
 function previewMatches(type, state){
 	var matches_ = [];
-	
+	previewMatchesURL = "https://cricket.yql.yahooapis.com/v1/public/yql?env=store://pxNdhUwVBsxmiCewq2IQe1&format=json&q=select matchid,MatchNo,Venue,Team,StartDate from cricket.upcoming_matches limit 5"
 	$.ajax({
-		url: matchesURL,
+		url: previewMatchesURL,
 		async: false
 	}).done(function(data) {
-		var data= data.filter(function (el) {
-    	return el.matchType == "International" && el.state =="preview";
-		});
+		data=data.query.results.Match
 		for (i=0; i<data.length ;i++) {
 			matches_.push(data[i]);
 		}
@@ -237,13 +233,13 @@ function previewMatches(type, state){
 
 function recentMatches(type, state){
 	var matches_ = [];
-	
+	var states_ = findStates("complete");
 	$.ajax({
 		url: matchesURL,
 		async: false
 	}).done(function(data) {
 		var data= data.filter(function (el) {
-    	return el.matchType == "International" && el.state =="complete";
+    	return el.matchType == "International" && $.inArray(el.state, states_)!=-1;
 		});
 		for (i=0; i<data.length ;i++) {
 			matches_.push(data[i]);
@@ -344,14 +340,17 @@ function showMatches() {
 		if(i==0) {
 			document.getElementById("slide-bar").innerHTML ="<div>No Live matches</div>"; 
 		} 
-		else { 
-				document.getElementById("slide-bar").innerHTML ="<div id='demo1' class='flexslider'><ul class='slides'>"+matchdata+"</ul><div style='clear: both'></div></div>";
-        document.getElementById("slide-bar").style="padding:0px 5px 5px 5px";
-				  $('.flexslider').flexslider({
-					animation: "slide"
-				  });
-  
-		}	
+		else {
+			document.getElementById("slide-bar").innerHTML ="<div id='flexSlider' class='flexslider'><ul class='slides'>"+matchdata+"</ul><div style='clear: both'></div></div>";
+	    document.getElementById("slide-bar").style="padding:0px 5px 5px 5px";
+			  $('.flexslider').flexslider({
+				animation: "slide"
+			  });
+			var live_footer=document.querySelectorAll(".follow_match");
+			for(i=0;i<live_footer.length;i++){
+			 live_footer[i].addEventListener('change', liveFooterEventListner);
+			}
+		}
 	});
 
 }
@@ -488,6 +487,38 @@ function scoreCard(matchId){
 	});
 }
 
+function triggerAreaEventListner(){
+	var activeTab="tab1";
+	var type="tab1";
+	if($('#insightlySidebar').length>0){
+		$('#insightlySidebar').remove();
+	}
+	else{
+		chrome.storage.sync.get(null, function(items) {
+		if(items["activeTab"]=="League"){
+			activeTab="tab2";
+		}
+		if(items["type"]=="Results"){
+			type="tab2";
+		}
+		if(items["type"]=="Schedule"){
+			type="tab3";
+		}
+		var insightlySidebar;
+		addContainer();
+		addMatchSlider();
+		addTabs(activeTab,type);
+		
+		setInterval(liveAccordion,10000,"International", "live");
+		setInterval(refreshShowMatches,10000);
+	});	
+	}
+}
+
+function closeContainerSpanEventListner(){
+	$("#insightlySidebar").remove();
+}
+
 function addEventsListener(){
 	var myLi=document.querySelectorAll('#tabbed-nav>ul>li>a');
 	for(i=0;i<myLi.length;i++){
@@ -501,6 +532,31 @@ function addEventsListener(){
 	for(i=0;i<accordion.length;i++){
 	 accordion[i].addEventListener('click', accordionEventListner,false);
 	}
+}
+
+function liveFooterEventListner(){
+	clearInterval(liveFooterInterval);
+	var footer="";
+	var result = "";
+	result+="<div id=footer_"+this.value
+	result+=">"
+	result+="<div><span id='close_live_footer'>x</span></div>"
+	result+="<div id=scoreCard>"
+	result+="</div>"
+	result+="</div>"
+	if(this.checked==false && $("#cric-extension-footer").length > 0){
+		$('#cric-extension-footer').remove();
+	}
+	if(this.checked==true){
+		$('input[name="live_footer"]').not(this).prop('checked', false);
+		footer=document.createElement("div");
+		footer.setAttribute("id", "cric-extension-footer");
+		footer.innerHTML = result;
+	  $('body').append(footer);
+		footer_layout.liveFooterScoreCard(parseInt(this.value));
+		liveFooterInterval = setInterval(footer_layout.liveFooterScoreCard,10000,parseInt(this.value));
+	}
+	document.getElementById("close_live_footer").addEventListener('click', liveFooterCloseEventListner,false);
 }
 
 function eventListner(){
@@ -535,6 +591,12 @@ function fullScreenEventListner(){
 
 function fullScreenCloseEventListner(){
 	$("#fullscreen").remove();
+}
+
+function liveFooterCloseEventListner(){
+	clearInterval(liveFooterInterval);
+	$('input[name="live_footer"]').prop('checked', false)
+	$("#cric-extension-footer").remove();
 }
 
 function liveDetails(matches_){
@@ -654,7 +716,13 @@ var match_layout = {
 	},
 	//follow_matches
 	followMatches:function(data){
-		follow_matches_data = "<div id='mdesc'>";
+		follow_matches_data=""
+		var	isCheckedData = " checked='checked' ";			
+		if($.inArray(data.matchId + "",dontFollowMatches) >= 0){
+			isCheckedData = "";
+		} 				
+		follow_matches_data+="<div id='mdesc'><input class='follow_match' type='checkbox' title='Receive alerts for this match' name='live_footer'  value='"+data.matchId+"' />";
+
 		return follow_matches_data;
 	},
 	//url_layout
@@ -906,15 +974,39 @@ var match_layout = {
 	getPreviewMatches:function(data){
 		var result = "";
 		for(i=0;i<data.length;i++){
-			result+="<div>"+data[i].battingTeamName+" VS "+data[i].bowlingTeamName+" "+data[i].matchdesc+"</div>"
-			result+="<div>"+data[i].series+"</div>"
-			result+="<div>"+data[i].status+"</div>"
+			result+="<div>"+data[i].Team[0].Team+" VS "+data[i].Team[1].Team+" "+data[i].Venue.content+"</div>"
+			result+="<div>"+data[i].StartDate+"</div>"
+			// result+="<div>"+data[i].status+"</div>"
 			// result+="<div>"+data[i].venue-name+" VS "+data[i].venue-city+"</div>"
 		}
 		return result;
 	},
 	getRecentMatches:function(data){
-		
+		var result = "";
+		for(i=0;i<data.length;i++){
+			result+="<div>"+match_layout.header(data[i]);
+			if(data[i].displayBattingTeamScore=="")
+			  result+=match_layout.completematchPreviewLayout(data[i])
+			else
+			  result+=match_layout.getRecentMatchesLayout(data[i])
+			  
+			result+=match_layout.status_layout(data[i])
+		}
+		return result;
+	},
+	
+	getRecentMatchesLayout:function(data){
+		if((data.type=="TEST")&&((data.BatTeam1stinnScore.runsAndWicket!=""&&data.BatTeam1stinnScore.runsAndWicket!="0/0")||(data.BowlTeam1stinnScore.runsAndWicket!=""&&data.BowlTeam1stinnScore.runsAndWicket!="0/0"))) {
+			completematch_layout_data ="<div><div class='match_main_div' style='background-color:#004466'><div class='match_preview_div1'><div class='left_half_block'><div class='team_names'>"+data.battingTeamName+"</div><div style='margin-top: 0px; font-size:16px;'>"+data.displayBattingTeamScore+"</div></div><div class='right_half_block_forCompleted'><div class='team_names'>"+data.bowlingTeamName+"</div><div style='margin-top: 0px; font-size:16px;'>"+data.displayBowlingTeamScore+"</div></div></div>";
+		}else {
+			completematch_layout_data ="<div><div><div><div><div class='team_names'>"+data.battingTeamName+" "+data.currentBatTeamScore.runsAndWicket+" <span class='overs' style='font-size:12px;' >"+data.currentBatTeamScore.overs+" ov</span></div></div>";
+			if(data.currentBowlTeamScore.runsAndWicket!="0/0"&&data.currentBowlTeamScore.overs!="0") {
+				completematch_layout_data +="<div><div>"+data.bowlingTeamName+" "+data.currentBowlTeamScore.runsAndWicket+" <span class='overs' style='font-size:12px;' >"+data.currentBowlTeamScore.overs+" ov</span></div></div></div>";
+			}  else {
+				completematch_layout_data +="<div><div>"+data.bowlingTeamName+"  Didn't bat</div></div></div>";
+			}
+		}
+		return completematch_layout_data;
 	},
 	//status_layout
 	status_layout:function(data){
@@ -934,5 +1026,151 @@ var match_layout = {
 		status_data+= ">"+statusData+"</div></div></div></a>"
 		return status_data;
 	},
+	
+}
+
+
+var footer_layout = {
+	liveFooterScoreCard:function(matchId){
+		var result = "";
+		var sc, $sc, rc, $rc, recentOversDetails, scoreCardDetails, values;
+		var footer="footer_"+matchId;
+		score_url = "https://www.cricbuzz.com/match-api/"+matchId+"/commentary.json"
+		$.ajax({
+			url: score_url,
+			async: false
+		}).done(function(data) {
+			sc 	= "footer_score_card"+data.id;
+			$sc = $('#'+sc);
+			rc 	= "footer_recent_overs"+data.id
+			$rc = $('#'+rc);
+			recentOversDetails = footer_layout.recent_overs(data);
+			scoreCardDetails = footer_layout.scorecard(data);
+		
+			values = typeof recentOversDetails !== 'undefined' ? recentOversDetails : '';
+			
+			if($sc.length){
+				$sc.html(scoreCardDetails);
+				if($rc.length){
+					$rc.html(recentOversDetails);
+				}	
+			}
+			else{
+			  result=""
+				result="<div id="+sc+">"+scoreCardDetails+"</div>";
+				if(values.length>0){
+					result+="<div id="+rc+">"+recentOversDetails+"</div>"
+				}
+				
+				$("#"+footer+">#scoreCard").html(result);
+			}
+		});
+	},
+	scorecard:function(data){
+		var striker, nonStriker;
+		striker = $(data.score.batsman).filter(function (i,n){
+       return n.strike==1;
+    });
+		nonStriker = $(data.score.batsman).filter(function (i,n){
+       return n.strike==0;
+    });
+		scoreCardData = ""
+		if(striker.length > 0){
+			var player1 = $(data.players).filter(function (i,n){
+				return striker.length>0 && n.id == striker[0].id 
+			});
+			striker[0].name = player1[0].name+"*"
+			striker[0].strike_rate = striker[0].b>0 ? ((striker[0].r/striker[0].b)*100).toFixed(2) : 0
+			scoreCardData+="<div>"
+			scoreCardData+=footer_layout.addBatsmanScore(striker[0]);
+			scoreCardData+="</div>"
+		}
+		if(nonStriker.length > 0){
+			var player2 = $(data.players).filter(function (i,n){
+				return n.id == nonStriker[0].id
+			});
+			nonStriker[0].name = player2[0].name
+			nonStriker[0].strike_rate = nonStriker[0].b>0 ? ((nonStriker[0].r/nonStriker[0].b)*100).toFixed(2) : 0
+			// batsman.push(nonStriker[0]);
+			scoreCardData+="<div>"
+			scoreCardData+=footer_layout.addBatsmanScore(nonStriker[0]);
+			scoreCardData+="</div>"
+		}	
+		scoreCardData+="<div>"
+		scoreCardData+=footer_layout.addBowlersInfo(data);
+		scoreCardData+="<div>"
+ 		return scoreCardData;
+	},
+	addBatsmanScore:function(batsman){
+		var batsmanScore="";
+		if(batsman){
+			batsmanScore+=batsman.name+" "
+			batsmanScore+=batsman.r+"("
+			batsmanScore+=batsman.b+")"
+		}
+		return batsmanScore;
+	},
+	addBowlersInfo:function(data){
+		var info="";
+		var bowlers = data.score.bowler;
+		var strikingBowler, nonStrikingBowler;
+		var strikingBowlerInfo, nonStrikingBowlerInfo;
+		if(typeof(bowlers[0]) != 'undefined')
+		{
+			strikingBowler=bowlers[0];
+		}
+		if(typeof(bowlers[1]) != 'undefined')
+		{
+			nonStrikingBowler=bowlers[1];
+		}
+		if(strikingBowler){
+			strikingBowlerInfo = $(data.players).filter(function (i,n){
+			  return n.id == strikingBowler.id
+			});
+		}
+		
+		if(nonStrikingBowler){
+			nonStrikingBowlerInfo= $(data.players).filter(function (i,n){
+			  return n.id == nonStrikingBowler.id
+			});
+		}
+		strikingBowler.name = strikingBowlerInfo[0].name+"*"
+		nonStrikingBowler.name = nonStrikingBowlerInfo[0].name
+		info+=footer_layout.addBowlersStats(strikingBowler)
+		info+=footer_layout.addBowlersStats(nonStrikingBowler)
+		return info;
+	},
+	
+	addBowlersStats: function(bowler){
+		var bowlersInfo="";
+		if(bowler){
+			var balls=0;
+			var overs = bowler.o.toString().split('.');
+			if(overs.length==2){
+				balls = (overs[0]*6)+(overs[1]*1);
+			}
+			else{
+				balls = overs[0]*6;
+			}
+			var ec = balls>0 ? ((bowler.r/balls)*6).toFixed(2) : 0
+
+			bowlersInfo+=bowler.name+" "
+			bowlersInfo+=bowler.w+"/"
+			bowlersInfo+=bowler.r
+		}	
+	return bowlersInfo;
+	},
+	
+	recent_overs:function(data){
+		prevOversData = ""
+		var prevOvers, values;
+		prevOvers = data.score.prev_overs
+		values = typeof prevOvers !== 'undefined' ? prevOvers : '';
+		if(values.length>0){
+			 prevOversData+=data.score.prev_overs	
+				return prevOversData;
+			}
+		return "";
+	}
 	
 }
